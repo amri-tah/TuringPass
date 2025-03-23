@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPTCHA Challenge</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+        h1 {
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+        .incorrect {
+            color: red;
+            font-weight: bold;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .score {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 CAPTCHA Challenge</h1>
+
+        {% if not session.game_started %}
+            <p>Welcome! Solve 10 CAPTCHAs as fast as possible.</p>
+            <form method="post">
+                <button type="submit" name="start_game">Start Game</button>
+            </form>
+        {% else %}
+            {% if session.current_captcha_index < 10 %}
+                <p><strong>CAPTCHA {{ session.current_captcha_index + 1 }} / 10</strong></p>
+                <img src="{{ DATA_DIR }}{{ session.captcha_list[session.current_captcha_index] }}" alt="CAPTCHA">
+                
+                {% if session.captcha_solved %}
+                    <p class="correct">✅ Correct! Answer: <strong>{{ session.captcha_list[session.current_captcha_index].split('.')[0] }}</strong></p>
+                    <form method="post">
+                        <button type="submit" name="next_captcha">Next</button>
+                    </form>
+                {% else %}
+                    <form method="post">
+                        <input type="text" name="captcha_input" placeholder="Enter CAPTCHA here" required>
+                        <button type="submit" name="submit_captcha">Submit</button>
+                    </form>
+                    {% if session.captcha_solved is not none and session.captcha_solved == False %}
+                        <p class="incorrect">❌ Incorrect. Try again!</p>
+                    {% endif %}
+                {% endif %}
+
+                <p class="score"><strong>Score:</strong> {{ session.score }} | <strong>Attempts:</strong> {{ session.attempts }}</p>
+            {% else %}
+                <h2>🎉 Challenge Completed!</h2>
+                <p>Your final score: <strong>{{ session.score }}</strong></p>
+                <form method="post">
+                    <button type="submit" name="restart_game">Restart Challenge</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>
