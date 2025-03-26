@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Captcha Collection - Mode Selection</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+        .mode-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .mode-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md mx-auto px-4">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-white mb-2 drop-shadow-lg">Captcha Collection</h1>
+            <p class="text-lg text-white opacity-80">Select Your Data Collection Mode</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('start_collection') }}" method="POST" class="space-y-6">
+            <!-- Human Mode Card -->
+            <div class="bg-white rounded-xl shadow-xl p-6 text-center mode-card transform transition hover:scale-105">
+                <input 
+                    type="radio" 
+                    id="human-mode" 
+                    name="mode" 
+                    value="human" 
+                    class="hidden" 
+                    required
+                >
+                <label for="human-mode" class="cursor-pointer">
+                    <div class="mb-4">
+                        <svg class="w-16 h-16 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Human Mode</h2>
+                    <p class="text-sm text-gray-600 mb-3">Collect naturalistic interaction data with genuine human patterns</p>
+                    <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Recommended for Most Studies</span>
+                </label>
+            </div>
+
+            <!-- Bot Mode Card -->
+            <div class="bg-white rounded-xl shadow-xl p-6 text-center mode-card transform transition hover:scale-105">
+                <input 
+                    type="radio" 
+                    id="bot-mode" 
+                    name="mode" 
+                    value="bot" 
+                    class="hidden"
+                >
+                <label for="bot-mode" class="cursor-pointer">
+                    <div class="mb-4">
+                        <svg class="w-16 h-16 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Bot Mode</h2>
+                    <p class="text-sm text-gray-600 mb-3">Simulate automated interaction patterns and behaviors</p>
+                    <span class="inline-block bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Advanced Research</span>
+                </label>
+            </div>
+
+            <div class="text-center">
+                <button 
+                    type="submit" 
+                    class="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 transition duration-300 text-base font-semibold shadow-lg transform hover:scale-105"
+                >
+                    Begin Collection
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const modeCards = document.querySelectorAll('.mode-card');
+        modeCards.forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            card.addEventListener('click', () => {
+                modeCards.forEach(c => {
+                    c.classList.remove('border-4', 'border-green-500');
+                    c.querySelector('label').classList.remove('bg-green-50');
+                });
+                card.classList.add('border-4', 'border-green-500');
+                card.querySelector('label').classList.add('bg-green-50');
+                radio.checked = true;
+            });
+        });
+    </script>
+</body>
+</html>
