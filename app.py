@@ -72,11 +72,18 @@ def start_collection():
     
     # Create a unique collection ID
     collection_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
-    
-    return render_template('captcha.html', 
+
+    if mode == 'bot': return render_template('predict.html', 
                            mode=mode, 
                            collection_id=collection_id,
                            captcha=captcha_manager.get_random_captcha())
+
+    else:
+        return render_template('captcha.html', 
+                               mode=mode, 
+                               collection_id=collection_id,
+                               captcha=captcha_manager.get_random_captcha())
+
 
 @app.route('/verify', methods=['POST'])
 def verify_captcha():
@@ -127,6 +134,26 @@ def verify_captcha():
         'correct': is_correct,
         'message': 'Captcha verified successfully!' if is_correct else 'Incorrect captcha. Try again.'
     })
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    """Handle bot or test mode submission (predict.html)"""
+    data = request.json
+    
+    # You can either reuse the verify_captcha logic or just print here
+    if not data:
+        return jsonify({'error': 'No data received'}), 400
+
+    print("=== BOT/TEST MODE SUBMISSION ===")
+    for key, value in data.items():
+        print(f"{key}: {value}")
+    print("=== END SUBMISSION ===")
+
+    return jsonify({
+        'correct': True,
+        'message': 'Bot/test mode submission received!'
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True)
