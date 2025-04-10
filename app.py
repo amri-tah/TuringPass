@@ -154,6 +154,5 @@ def predict():
         'message': 'Bot/test mode submission received!'
     })
 
-
 if __name__ == '__main__':
     app.run(debug=True)
