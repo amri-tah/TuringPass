@@ -303,24 +303,36 @@ class CaptchaSolverBot {
     }
     
     // Get prediction from API (simulated)
-    async getPrediction(imageData) {
-      console.log("Getting prediction for image:", imageData.filename);
+    async getPredictionFromOCR(imageData) {
+      console.log("Getting prediction from OCR for image:", imageData.filename);
       
-      // Simulate API call delay
-      await this.delay(500 + Math.random() * 1000);
+      try {
+        // Fetch the image as a Blob
+        const imageResponse = await fetch(imageData.imageUrl);
+        const imageBlob = await imageResponse.blob();
       
-      // Generate a random alphanumeric string for testing
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let result = '';
-      const length = 5 + Math.floor(Math.random() * 3); // 5-7 chars
+        // Prepare form data
+        const formData = new FormData();
+        formData.append("image", imageBlob, imageData.filename || "captcha.png");
       
-      for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Send POST request to /predict
+        const response = await fetch("http://127.0.0.1:5000/predict", {
+          method: "POST",
+          body: formData
+        });
+      
+        if (!response.ok) {
+          throw new Error(`Server returned status: ${response.status}`);
+        }
+      
+        const result = await response.json();
+        console.log("✅ OCR server prediction:", result.prediction);
+        return result.prediction;
+      } catch (error) {
+        console.error("❌ Error fetching OCR result:", error);
+        throw error;
       }
-      
-      console.log("Received prediction:", result);
-      return result;
-    }
+      }
     
     // Prepare data for console output
     prepareRequestData(isCorrect = true) {
@@ -423,3 +435,35 @@ class CaptchaSolverBot {
   
   // Also make it available on the window object for manual triggering
   window.runCaptchaSolverBot = runCaptchaSolverBot;
+
+  (async () => {
+    const bot = new CaptchaSolverBot();
+  
+    // Initialize the bot (wait for DOM to be ready)
+    const initialized = await bot.initialize();
+    if (!initialized) {
+      console.error("Failed to initialize the bot.");
+      return;
+    }
+  
+    // Wait a bit to simulate human reaction delay
+    await bot.delay(1000 + Math.random() * 1000);
+  
+    // Get CAPTCHA image data
+    const imageData = bot.getCaptchaImageData();
+  
+    // Get prediction from OCR server
+    const prediction = await bot.getPredictionFromOCR(imageData);
+    console.log("OCR Prediction:", prediction);
+  
+    // Simulate typing the prediction into input field
+    await bot.typePrediction(prediction);
+  
+    // Simulate human delay before clicking submit
+    await bot.delay(500 + Math.random() * 800);
+  
+    // Simulate mouse movements and click the predict button
+    await bot.simulateMouseMovements();
+  
+    console.log("Interaction complete. Total attempts:", bot.attempts + 1);
+  })();

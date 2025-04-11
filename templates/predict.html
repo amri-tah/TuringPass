@@ -38,15 +38,16 @@
           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <input type="hidden" id="collectionId" value="{{ collection_id }}" />
+        <input type="hidden" id="attempts" value="1" />
+
         <div class="flex gap-3">
-            <button
+          <button
             onclick="predictCaptcha()"
             class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg w-full transition duration-300"
           >
             Predict
           </button>
-  
-          <!-- Skip/Next Buttons in same block -->
+
           <div class="flex justify-center gap-4">
             <button
               onclick="skipCaptcha()"
@@ -62,13 +63,14 @@
             >
               Next
             </button>
-
-        </div>
-        
+          </div>
         </div>
       </div>
 
-      <div id="result" class="mt-4 text-center font-semibold text-lg"></div>
+      <div
+        id="result"
+        class="mt-4 text-center font-semibold text-lg"
+      ></div>
 
       <div
         id="interactionLog"
@@ -81,7 +83,6 @@
         keyPresses = 0,
         backspacePresses = 0,
         mouseMovements = [];
-      const collectionId = document.getElementById("collectionId").value;
 
       document.addEventListener("DOMContentLoaded", () => {
         startTime = new Date().getTime();
@@ -112,15 +113,22 @@
         const captchaInput = document.getElementById("captchaInput");
         const resultDiv = document.getElementById("result");
         const captchaImage = document.getElementById("captchaImage");
+        const collectionId = document.getElementById("collectionId").value;
+        const attemptsInput = document.getElementById("attempts");
+
+        const responseText = captchaInput.value.trim();
+        const isCorrect = responseText.length > 0; // Optional: Replace with server-side label checking
 
         const data = {
           collection_id: collectionId,
           captcha_image: captchaImage.getAttribute("data-filename"),
-          response: captchaInput.value,
+          response: responseText,
           time_taken: timeTaken,
           key_presses: keyPresses,
           backspace_presses: backspacePresses,
           mouse_movements: mouseMovements,
+          is_correct: isCorrect,
+          attempts: parseInt(attemptsInput.value)
         };
 
         fetch("/predict", {
@@ -132,18 +140,42 @@
         })
           .then((response) => response.json())
           .then((result) => {
-            resultDiv.innerHTML =
-              result.prediction === "bot"
-                ? "❌ Bot Detected"
-                : "✅ Human Detected";
-            logInteraction(`Prediction: ${result.prediction}`);
+            const prediction = result.bot_prediction || "unknown";
+            let message = "";
+            resultDiv.classList.remove(
+              "text-red-600",
+              "text-green-600",
+              "text-yellow-500"
+            );
+
+            if (prediction === "bot") {
+              message = "❌ Bot Detected";
+              resultDiv.classList.add("text-red-600");
+            } else if (prediction === "human") {
+              message = "✅ Human Detected";
+              resultDiv.classList.add("text-green-600");
+            } else {
+              message = "⚠️ Unable to determine";
+              resultDiv.classList.add("text-yellow-500");
+            }
+
+            resultDiv.innerHTML = message;
+
+            logInteraction(`Prediction: ${prediction}`);
+            if (result.mse !== undefined) {
+              logInteraction(`MSE: ${result.mse}`);
+            }
+            if (result.features) {
+              logInteraction("Features: " + JSON.stringify(result.features));
+            }
 
             document.getElementById("nextBtn").classList.remove("hidden");
             document.getElementById("skipBtn").classList.add("hidden");
           })
           .catch((error) => {
             console.error("Error:", error);
-            resultDiv.innerHTML = "An error occurred";
+            resultDiv.innerHTML = "❌ An error occurred";
+            resultDiv.classList.add("text-red-600");
             logInteraction("Error in prediction");
           });
       }

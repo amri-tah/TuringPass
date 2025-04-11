@@ -11,8 +11,10 @@ import tensorflow as tf
 from PIL import Image
 import json
 import io
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Constants
 CHARACTERS = ['3', 'S', 'E', 'B', 'G', 'P', 'V', 'j', 'T', 'C', '9', 'F', 'm', 
@@ -35,10 +37,10 @@ num_to_char = layers.StringLookup(vocabulary=char_to_num.get_vocabulary(),
 
 
 # Load model
-model = load_model("lstm_autoencoder_model.h5", compile=False)
+model = load_model("./lstm_autoencoder_model.h5", compile=False)
 model.compile(optimizer=Adam(), loss=MeanSquaredError())
-scaler = joblib.load("scaler.save")
-captcha_model = load_model('captcha_model.h5', custom_objects={'StringLookup': char_to_num})
+scaler = joblib.load("./scaler.save")
+captcha_model = load_model('./captcha_model.h5', custom_objects={'StringLookup': char_to_num})
     
 def preprocess_image_from_bytes(image_bytes):
     img = tf.io.decode_jpeg(image_bytes, channels=1)
@@ -137,9 +139,9 @@ def predict():
     mse = np.mean(np.mean(np.square(X_reshaped - reconstruction), axis=1), axis=1)[0]
     
     # Use threshold from training
-    threshold = 30
+    threshold = 100000
     
-    prediction = 1 if mse > threshold else 0
+    prediction = 1 if mse < threshold else 0
     
     return jsonify({
         "prediction": "bot" if prediction == 1 else "human", 
@@ -174,6 +176,7 @@ def predict_captcha():
         decoded = decode_predictions(prediction)
         return jsonify({'prediction': decoded})
     except Exception as e:
+        print(jsonify({'error': str(e)}))
         return jsonify({'error': str(e)}), 500
 
 
